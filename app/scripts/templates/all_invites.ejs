@@ -1,0 +1,20 @@
+<h2>AllInvitesView</h2>
+<ul>
+<% 
+		_.each(this.model.models, function(invite) {
+%>
+    <li>
+        <a href="#/invite/<%= invite.get('id') %>">Detailed View</a> 
+<%=
+    invite.get('what') + ' ' + invite.get('who') + " " + invite.get('when') + " " + invite.get('where').venueName
+%>
+
+    </li>
+<%
+    });
+%>
+
+</ul>
+
+<a href="#">Home</a>
+

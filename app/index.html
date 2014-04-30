@@ -21,9 +21,12 @@
         <div id="fb-root"></div>
 
         <div class="container">
+            <!-- This is the stuff which doesn't change -->
             <div class="header">
-                <h3 class="text-muted">Invite</h3>
+                <h1 class="text-muted">Invite: An App To Help Meet People In Real Life</h1>
             </div>
+            <!-- This is where we will render -->
+            <div id="targetElement"></div>
         </div>
 
 
@@ -58,17 +61,34 @@
         <script src="bower_components/sass-bootstrap/js/tab.js"></script>
         <!-- endbuild -->
 
-        <!-- do not check in the auth_keys file to source control -->
+        <!-- do not check the auth_keys file into source control -->
         <script src="auth_keys.js"></script>
 
         <!-- build:js({.tmp,app}) scripts/main.js -->
         <script src="scripts/vendor/parse-1.2.18.js"></script>
-        <script src="scripts/main.js"></script>
+        
+        <script src="scripts/define_invite.js"></script>
         <script src="scripts/templates.js"></script>
-        <script src="scripts/routes/places.js"></script>
+
+        <script src="scripts/models/place.js"></script>
+        <script src="scripts/models/person.js"></script>
+        <script src="scripts/models/invite.js"></script>
+
         <script src="scripts/collections/places.js"></script>
-        <script src="scripts/models/places.js"></script>
+        <script src="scripts/collections/people.js"></script>
+        <script src="scripts/collections/all_invites.js"></script>
+
+        <script src="scripts/views/all_views.js"></script>
+        <script src="scripts/views/default_view.js"></script>
         <script src="scripts/views/places.js"></script>
+        <script src="scripts/views/single_invite.js"></script>
+        <script src="scripts/views/create_invite.js"></script>
+        <script src="scripts/views/all_invites.js"></script>
+
+        <script src="scripts/main.js"></script>
+
+        <script src="scripts/routes/routes.js"></script>
+
         <!-- endbuild -->
 </body>
 </html>
