@@ -1,4 +1,6 @@
 invite
 ======
 
-Learning how to use Parse and Backbone
+Learning how to use Parse and Backbone.
+
+This is a work in progress; I am blogging about the experience [here](http://fatchat121.blogspot.com/2014/04/writing-small-application-using-parse.html)
