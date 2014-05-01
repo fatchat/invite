@@ -8,8 +8,8 @@ This is a work in progress; I am blogging about the experience [here](http://fat
 1. Clone the repository
 
 2. Build
-    npm install
-    bower install
+        npm install
+        bower install
     
 3. Run
-    grunt serve
+        grunt serve
