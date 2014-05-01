@@ -8,7 +8,7 @@
  *              The FB ids of their FB friends will be stored locally
  *              The Invite ids of the other contacts could be obtained from
  *              their event list, but for speed we will cache them in the 
- *              Parse.User objects
+ *              Parse.User objects. Or maybe in local storage
  **/
 
 Invite.Collections = Invite.Collections || {};

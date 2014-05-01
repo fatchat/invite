@@ -1,0 +1,19 @@
+<h2>People</h2>
+<%= this.model.models.length %> contacts
+<br />
+<ul>
+<% 
+		_.each(this.model.models, function(person) {
+%>
+    <li>
+        <a href="#/person/<%= person.get('fbId') %>">Profile Page for <%= person.get('realname') %></a> 
+    </li>
+<%
+    });
+%>
+
+</ul>
+
+<a href="#">Home</a>
+
+

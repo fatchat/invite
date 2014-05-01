@@ -7,9 +7,9 @@ Invite.Router = Backbone.Router.extend({
 	routes: {
 
 		// people
-		"persons"		: "allPeople",
-		"person/:id"	: "theirProfile",
+		"people"		: "allPeople",
 		"person/self" 	: "myProfile",
+		"person/:id"	: "theirProfile",
 
 		// places
 		"places"		: "allPlaces",
@@ -21,29 +21,115 @@ Invite.Router = Backbone.Router.extend({
 		"invite/:id" 	: "viewInvite",
 
 		// catch-all
-		"*actions"		: "allInvites"
+		"*actions"		: "defaultRoute"
 	},
 
+	// verify that Parse.User.current() !== null
 	allPeople : function() {
 
 		console.log("allPeople");
+
+		Invite.appController.updateContacts(function(friends) {
+
+			// create collection for the People view
+			var allPeopleList = new Invite.Collections.People();
+
+			// add to collection
+			_.each(friends, function(friend) {
+				allPeopleList.add(new Invite.Models.Person({realname: friend.name, fbId: friend.id}));
+			});
+
+			// create the People view
+			var allPeopleView = new Invite.Views.People({model:allPeopleList});
+
+			// switch to view
+			Invite.appController.showView(allPeopleView);
+		});
 	},
 
-	theirProfile : function(personId) {
+	// verify that Parse.User.current() !== null
+	theirProfile : function(fbId) {
 
-		console.log("theirProfile, id=" + personId);
+		console.log("theirProfile, id=" + fbId);
+
+		Invite.appController.getPersonInfo(fbId, function(personInfo) {
+
+			// we have two models which represent a Parse.User, one for "my profile" which shows gender, DOB etc. and one for "their profile" which shows less
+			var profileInfo = new Invite.Models.Profile(personInfo);
+
+			var profileView = new Invite.Views.Person({model:profileInfo});
+
+			// render
+			Invite.appController.showView(profileView);
+		});
 	},
 
+	myProfile : function() {
+
+		console.log("myProfile");
+
+		Invite.appController.updateProfile(function() {
+
+			// we have two models which represent a Parse.User, one for "my profile" which shows gender, DOB etc. and one for "their profile" which shows less
+			var myProfileInfo = new Invite.Models.Profile({
+				name: Parse.User.current().get("realname")
+			});
+
+			var myProfileView = new Invite.Views.Person({model:myProfileInfo});
+
+			// render
+			Invite.appController.showView(myProfileView);
+		});
+	},
+
+	// verify that Parse.User.current() !== null
 	allPlaces : function() {
 
 		console.log("allPlaces");
+
+		// get the list of Places
+		Invite.appController.getPlaces(function(allPlacesList) {
+
+			// console.log(allPlacesList);
+			// create the view with this list associated
+			var allPlacesView = new Invite.Views.Places({model:allPlacesList});
+
+			// render
+			Invite.appController.showView(allPlacesView);
+		});
 	},
 
+	// verify that Parse.User.current() !== null
 	place : function(placeId) {
 
 		console.log("place, id=" + placeId);
+
+		Invite.appController.getPlaceInfo(placeId, function(placeInfo) {
+
+			if(placeInfo !== null) {
+
+				var singlePlace = new Invite.Models.Place({
+					name:placeInfo.name, 
+					venueType:placeInfo.venueType, 
+					page: placeInfo.page
+				});
+
+				// create the view and attach the data
+				var singlePlaceView = new Invite.Views.SinglePlace({model:singlePlace});
+
+				// switch to this new view
+				Invite.appController.showView(singlePlaceView);
+			}
+			else {
+
+				console.log("No such place with id " + placeId);
+
+				this.defaultRoute();
+			}
+		});
 	},
 
+	// verify that Parse.User.current() !== null
 	createInvite : function() {
 
 		console.log("createInvite");
@@ -55,24 +141,31 @@ Invite.Router = Backbone.Router.extend({
 		Invite.appController.showView(createInviteView);
 	},
 
+	// verify that Parse.User.current() !== null
 	allInvites : function() {
 
-		console.log("allInvites");
+		// console.log("allInvites");
+
+		// get the current list of invites
+		var allInvitesList = Invite.appController.getInvites();
 
 		// create the view and attach the data
-		var invitesView = new Invite.Views.AllInvites({model:Invite.appController.allInvites});
+		var invitesView = new Invite.Views.AllInvites({model:allInvitesList});
 
-		console.log(invitesView);
 		// switch to this new view
 		Invite.appController.showView(invitesView);
 	},
 
+	// verify that Parse.User.current() !== null
 	viewInvite : function(inviteId) {
 
-		console.log("viewInvite, id=" + inviteId);
+		// console.log("viewInvite, id=" + inviteId);
+
+		// get the current list of invites
+		var allInvitesList = Invite.appController.getInvites();
 
 		// get the invite from the id
-		var theInvite = Invite.appController.allInvites.findWhere({ id : Number(inviteId) });
+		var theInvite = allInvitesList.findWhere({ id : Number(inviteId) });
 
 		// if the invite exists
 		if(theInvite !== undefined) {
@@ -89,13 +182,21 @@ Invite.Router = Backbone.Router.extend({
 
 			console.log("Could not find invite having id " + inviteId + ", returning to home screen");
 
-			// forward to default route. TODO how to change the URL?
-			this.allInvites();
+			// forward to default route
+			this.defaultRoute();
 		}
+	},
+
+	defaultRoute : function() {
+
+		// forward to default route
+		this.navigate('invites', {trigger:true});
 	}
 });
 
+// create the single router for the application
 var appRouter = new Invite.Router();
 
+// this is required by Backbone
 Backbone.history.start();
 

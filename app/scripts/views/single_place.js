@@ -5,9 +5,9 @@ Invite.Views = Invite.Views || {};
 (function () {
     'use strict';
 
-    Invite.Views.AllInvites = Backbone.View.extend({
+    Invite.Views.SinglePlace = Backbone.View.extend({
 
-        template: JST['app/scripts/templates/all_invites.ejs'],
+        template: JST['app/scripts/templates/single_place.ejs'],
 
         tagName: 'div',
 
@@ -22,7 +22,6 @@ Invite.Views = Invite.Views || {};
         },
 
         render: function () {
-            // console.log("all invite render"); console.log(this.model);
             this.$el.html(this.template(this.model.toJSON()));
         }
 

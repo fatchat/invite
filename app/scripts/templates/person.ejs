@@ -1,0 +1,11 @@
+<h2>Profile</h2>
+
+Name : <%= this.model.get("realname") %>
+<br />
+
+<% if(this.model.get("photo")) { %>
+<img src="<%= this.model.get("photo") %>" />
+<% } %>
+
+<br />
+<a href="#">Home</a>

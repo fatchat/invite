@@ -22,7 +22,6 @@ Invite.Views = Invite.Views || {};
         },
 
         render: function () {
-            console.log("single invite render"); console.log(this.model);
             this.$el.html(this.template(this.model.toJSON()));
         }
 

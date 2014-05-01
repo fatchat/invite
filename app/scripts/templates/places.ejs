@@ -1,2 +1,25 @@
-<p>Your content here.</p>
+<h2>Places</h2>
+
+<%= this.model.models.length %> places
+<br />
+
+<ul>
+<% 
+		_.each(this.model.models, function(place) {
+%>
+    <li>
+        <a href="#/place/<%= place.get('fbId') %>">Detailed View</a> 
+<%=
+    place.get('name') + '; ' + place.get('venueType')
+%>
+
+    </li>
+<%
+    });
+%>
+
+</ul>
+
+<a href="#">Home</a>
+
 

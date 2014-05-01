@@ -7,4 +7,6 @@ app/bower_components
 test/bower_components/
 app/auth_keys.js
 *~
+invite.sublime-project
+invite.sublime-workspace
 
