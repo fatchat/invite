@@ -1,10 +1,10 @@
 <h2>Their Profile</h2>
 
-Name : <%= this.model.get("realname") %>
+Name : <%= this.model.get("name") %>
 <br />
 
-<% if(this.model.get("photo")) { %>
-<img src="<%= this.model.get("photo") %>" />
+<% if(this.model.get("cover")) { %>
+<img src="<%= this.model.get("cover").source %>" />
 <% } %>
 
 <br />

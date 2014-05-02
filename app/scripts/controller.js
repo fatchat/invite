@@ -2,6 +2,8 @@
 // one central controller for the application
 function AppController() {
     
+    var FACEBOOK_QUERY_ATTEMPT_LIMIT = 5;
+
     // switch views
     this.showView = function(view) {
 
@@ -15,37 +17,65 @@ function AppController() {
     };
 
     // get location on this browser / device
-    this.getLocation = function(callback) {
+    this.getLocation = function(error_cb, success_cb) {
 
-        navigator.geolocation.getCurrentPosition(callback);
+        navigator.geolocation.getCurrentPosition(success_cb, error_cb);
     };
 
     // query the Graph API
     this.facebookQuery = function(queryString, callback) {
 
-        var doer = function () {
+        var doer = function (nattempts) {
 
-            if ((!!window.FB) && (!!Parse.applicationId) && (!!Parse.User.current())) {
+            console.log(nattempts + ' ' + queryString);
+            if (nattempts > FACEBOOK_QUERY_ATTEMPT_LIMIT) {
+                // give up
+                console.log("looped " + FACEBOOK_QUERY_ATTEMPT_LIMIT + " times, giving up");
+                // this needs to be logged and reported 
+                callback({error_msg:"Reached Facebook query attempt limit, giving up"});
+            }
+
+            if ((!!window.FB) && (!!Parse.applicationId) && (!!Parse.User.current()) && Parse.User.current().authenticated()) {
 
                 window.FB.api(queryString, { 'access_token': Parse.User.current()._serverData.authData.facebook.access_token }, function(response) {
 
-                    // token expired! this logic needs to be a)understood, and b)put everywhere
-                    if(response.hasOwnProperty('error') && response.error.code === 190) {
-                        Parse.User.logOut();
-                        Invite.loginUser(doer);
+                    // error handling:
+                    //  code=190 => session expired
+                    //  code=2 => unknown, try later
+                    if(response.hasOwnProperty('error')) {
+
+                        console.log(response.error);
+
+                        if(response.error.code === 190) { 
+                            // log out
+                            Parse.User.logOut();
+
+                            // wait before logging back in
+                            setTimeout(function() {
+                                Invite.loginUser(doer, 1 + nattempts);
+                            }, 3000);
+                        }
+                        else {
+                            // just try again 
+                            setTimeout(function() {
+                                doer(1 + nattempts);
+                            }, 3000);
+                        }
                     }
                     else {
-                        callback(response); 
+                        callback(null, response); 
                     }
                 });
             }
             else {
                 // wait 0.1s
-                setTimeout(doer, 100);
+                setTimeout(function() {
+                    doer(1 + nattempts);
+                }, 100);
             }
         };
 
-        doer();
+        doer(0);
     };
 
     // update contact list with Facebook friends. don't modify the WTP contacts, only add/remove the facebook contacts according to the current list
@@ -53,15 +83,27 @@ function AppController() {
 
         var friends = [];
 
-        this.facebookQuery('/me/friends', function(response) {
+        this.facebookQuery('/me/friends', function(error, response) {
 
-            // response.data and response.paging.next
-            console.log(response);
+            if(error) {
 
-            friends = friends.concat(response.data);
+                next(error);
+            }
+            else {
 
-            // if response.paging.next then do it again TODO
-            next(friends);
+                // response.data and response.paging.next
+                console.log(response);
+
+                if(response.data) {
+
+                    friends = friends.concat(response.data);
+                    // if response.paging.next then do it again TODO
+                    next(null, friends);                
+                }
+                else {
+                    next({error:"unrecognized response to /me/friends"});
+                }
+            }
         });
     };
 
@@ -73,27 +115,33 @@ function AppController() {
             Parse.User.current().set("privacy_non_fb_see_only_name", false);
         }
 
-        this.facebookQuery('/me?fields=name,cover,gender', function(response) {
+        this.facebookQuery('/me?fields=name,cover,gender', function(error, response) {
 
-            console.log("returning from /me");
+            if (error) {
+                next(error);
+            }
+            else {
 
-            // information to populate the model
-            var info = {
-                fbId : response.id,
-                realname : response.name,
-                gender : response.gender,
-                privacy_non_fb_see_only_name : Parse.User.current().get("privacy_non_fb_see_only_name"),
-                photoURL : response.cover && response.cover.source
-            };
+                // information to populate the model. extract fields from response keeping the same names; adding more is allowed
+                var info = {
+                    id : response.id,
+                    name : response.name,
+                    gender : response.gender,
+                    privacy_non_fb_see_only_name : Parse.User.current().get("privacy_non_fb_see_only_name"),
+                    cover : response.cover
+                };
 
-            // overwrite existing values, if any, and send to Parse
-            _.each(info, function(val, key) {
-                Parse.User.current().set(key, val);
-            });
-            Parse.User.current().save();
+                // overwrite existing values, if any, and send to Parse
+                _.each(info, function(val, key) {
+                    if(info.hasOwnProperty(key)) {
+                        Parse.User.current().set(key, val);
+                    }
+                });
+                Parse.User.current().save();
 
-            // 
-            next(info);
+                // 
+                next(null, info);
+            }
         });
     };
 
@@ -102,22 +150,89 @@ function AppController() {
 
         var queryString = '/' + fbId + '?fields=name,cover';
 
-        this.facebookQuery(queryString, function(response) { 
+        this.facebookQuery(queryString, function(error, response) { 
 
+            if (error) {
+                next(error);
+            }
+            else { 
                 console.log(response);
                 var info = {
-                    fbId : fbId,
-                    realname : response.name,
-                    photoURL : response.cover && response.cover.source
+                    id : fbId,
+                    name : response.name,
+                    cover : response.cover
                 };
 
                 // find their Invite user obj, if it exists check the privacy_non_fb_see_only_name flag
                 // if it is True, remove the photoURL from info
                 // if it is False, get the list of common plans shared with this person
 
-                next(info);
+                next(null, info);
+            }
+        });
+    };
+
+    // get list of places from facebook
+    this.getPlacesNearMe = function(next) {
+
+        var appcontroller = this;
+
+        this.getLocation(
+
+            // error callback
+            function(error) {
+
+                // https://developer.mozilla.org/en-US/docs/Web/API/PositionError
+                next({error_msg:error.message});
+            }, 
+
+            // success callback
+            function(response) {
+
+                var queryString = '/search' +
+                                    '?type=place' +
+                                    '&center=' + response.coords.latitude + 
+                                           ',' + response.coords.longitude +
+                                    '&limit=20' +
+                                    '&distance=1000'
+                                    ;
+                // console.log(queryString);
+
+                appcontroller.facebookQuery(queryString, function(error, response) { 
+
+                    if(error) {
+                        next(error);
+                    }
+                    else { 
+                        console.log(response);
+                        var allPlaces = new Invite.Collections.Places();
+
+                        _.each(response.data, function(place) {
+                            allPlaces.add(new Invite.Models.Place(place));
+                        });
+
+                        next(null, allPlaces);
+                    }
+                });
             }
         );
+    };
+
+    // get detailed information for a place
+    this.getPlaceInfo = function(placeId, next) {
+
+        var queryString = '/' + placeId + '?fields=name,category,link,cover,description,is_permanently_closed,location,phone';
+
+        this.facebookQuery(queryString, function(error, response) { 
+
+            if(error) {
+                next(error);
+            }
+            else { 
+                console.log(response);
+                next(null, response);
+            }
+        });
     };
 
     // get list of user's invites
@@ -137,58 +252,6 @@ function AppController() {
         return allInvites;
     };
 
-    // get list of places from facebook
-    this.getPlaces = function(next) {
-
-        var appcontroller = this;
-
-        this.getLocation(function(response) {
-
-            var _lat = response.coords.latitude,
-                _long = response.coords.longitude;
-
-            var queryString = '/search' +
-                                '?type=place' +
-                                '&center=' + _lat + ',' + _long +
-                                '&limit=20' +
-                                '&distance=1000'
-                                ;
-            // console.log(queryString);
-
-            appcontroller.facebookQuery(queryString, function(response) { 
-
-                    console.log(response);
-                    var allPlaces = new Invite.Collections.Places();
-
-                    _.each(response.data, function(place) {
-
-                        allPlaces.add(new Invite.Models.Place({
-                            name: place.name, 
-                            venueType: place.category,
-                            fbId: place.id
-                        }));
-                    });
-
-                    next(allPlaces);
-                }
-            );
-
-        });
-
-    };
-
-    // get detailed information for a place
-    this.getPlaceInfo = function(placeId, next) {
-
-        var queryString = '/' + placeId + '?fields=name,category,link,cover,description,is_permanently_closed,location,phone';
-
-        this.facebookQuery(queryString, function(response) { 
-
-                console.log(response);
-                next(response);
-            }
-        );
-    };
 }
 
 // create single instance

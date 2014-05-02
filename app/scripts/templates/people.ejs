@@ -6,7 +6,7 @@
 		_.each(this.model.models, function(person) {
 %>
     <li>
-        <a href="#/person/<%= person.get('fbId') %>">Profile Page for <%= person.get('realname') %></a> 
+        <a href="#/person/<%= person.get('id') %>">Profile Page for <%= person.get('name') %></a> 
     </li>
 <%
     });

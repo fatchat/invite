@@ -1,5 +1,11 @@
 <h2>Places</h2>
 
+Search
+<form>
+	<input type="text" id="venue_search" />
+	<button id="venue_search_submit">Search</button>
+</form>
+
 <%= this.model.models.length %> places
 <br />
 
@@ -8,9 +14,9 @@
 		_.each(this.model.models, function(place) {
 %>
     <li>
-        <a href="#/place/<%= place.get('fbId') %>">Detailed View</a> 
+        <a href="#/place/<%= place.get('id') %>">Detailed View</a> 
 <%=
-    place.get('name') + '; ' + place.get('venueType')
+    place.get('name') + '; ' + place.get('category')
 %>
 
     </li>

@@ -1,11 +1,15 @@
 <h2>My Profile</h2>
 
-Name : <%= this.model.get("realname") %>
+Name : <%= this.model.get("name") %>
+<br />
+Gender: <%= this.model.get("gender") %>
 <br />
 
-<% if(this.model.get("photo")) { %>
-<img src="<%= this.model.get("photo") %>" />
+<% if(this.model.get("cover")) { %>
+<img src="<%= this.model.get("cover").source %>" />
 <% } %>
+
+Privacy: Non-Facebook friends see only your name: <%= this.model.get("privacy_non_fb_see_only_name") %>
 
 <br />
 <a href="#">Home</a>

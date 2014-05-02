@@ -14,7 +14,7 @@ window.Invite = {
             fjs.parentNode.insertBefore(js, fjs);
         }(document, 'script', 'facebook-jssdk'));
     },
-    loginUser: function(next) {
+    loginUser: function(next, next_params) {
 
         var doer = function() {
 
@@ -43,7 +43,7 @@ window.Invite = {
                         // this user object is accessible as Parse.User.current()
                         // console.log(user);
                         if(next) {
-                            next();
+                            next(next_params);
                         }
                     },
                     error: function(user, error) {

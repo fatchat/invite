@@ -9,11 +9,11 @@ Invite.Router = Backbone.Router.extend({
 		// people
 		"people"		: "allPeople",
 		"person/self" 	: "myProfile",
-		"person/:id"	: "theirProfile",
+		"person/:fbid"	: "theirProfile",
 
 		// places
 		"places"		: "allPlaces",
-		"place/:id"		: "place",
+		"place/:fbid"	: "place",
 
 		// invites
 		"invite/create"	: "createInvite",
@@ -29,21 +29,29 @@ Invite.Router = Backbone.Router.extend({
 
 		console.log("allPeople");
 
-		Invite.appController.updateContacts(function(friends) {
+		Invite.appController.updateContacts(function(error, friends) {
 
-			// create collection for the People view
-			var allPeopleList = new Invite.Collections.People();
+			if(error) {
+				
+				var errorView = new Invite.Views.Error({model:new Invite.Models.Error(error)});
 
-			// add to collection
-			_.each(friends, function(friend) {
-				allPeopleList.add(new Invite.Models.Person({realname: friend.name, fbId: friend.id}));
-			});
+				Invite.appController.showView(errorView);
+			}
+			else { 
+				// create collection for the People view
+				var allPeopleList = new Invite.Collections.People();
 
-			// create the People view
-			var allPeopleView = new Invite.Views.People({model:allPeopleList});
+				// add to collection
+				_.each(friends, function(friend) {
+					allPeopleList.add(new Invite.Models.Person(friend));
+				});
 
-			// switch to view
-			Invite.appController.showView(allPeopleView);
+				// create the People view
+				var allPeopleView = new Invite.Views.People({model:allPeopleList});
+
+				// switch to view
+				Invite.appController.showView(allPeopleView);
+			}
 		});
 	},
 
@@ -52,27 +60,45 @@ Invite.Router = Backbone.Router.extend({
 
 		console.log("theirProfile, id=" + fbId);
 
-		Invite.appController.getPersonInfo(fbId, function(theirInfo) {
+		Invite.appController.getPersonInfo(fbId, function(error, theirInfo) {
 
-			// create the view for the contact's profile
-			var theirProfileView = new Invite.Views.TheirProfile({model:new Invite.Models.Profile(theirInfo)});
+			if(error) {
+								
+				var errorView = new Invite.Views.Error({model:new Invite.Models.Error(error)});
 
-			// render
-			Invite.appController.showView(theirProfileView);
+				Invite.appController.showView(errorView);
+			}
+			else { 
+				// create the view for the contact's profile
+				var theirProfileView = new Invite.Views.TheirProfile({model:new Invite.Models.Profile(theirInfo)});
+
+				// render
+				Invite.appController.showView(theirProfileView);
+			}
 		});
 	},
 
+	// show this user's profile
 	myProfile : function() {
 
 		console.log("myProfile");
 
-		Invite.appController.updateProfile(function(myInfo) {
+		Invite.appController.updateProfile(function(error, myInfo) {
 
-			// create the view for this user's profile
-			var myProfileView = new Invite.Views.MyProfile({model:new Invite.Models.Profile(myInfo)});
+			if(error) {
+				
+				var errorView = new Invite.Views.Error({model:new Invite.Models.Error(error)});
 
-			// render
-			Invite.appController.showView(myProfileView);
+				Invite.appController.showView(errorView);
+			}
+			else { 
+
+				// create the view for this user's profile
+				var myProfileView = new Invite.Views.MyProfile({model:new Invite.Models.Profile(myInfo)});
+
+				// render
+				Invite.appController.showView(myProfileView);
+			}
 		});
 	},
 
@@ -82,14 +108,22 @@ Invite.Router = Backbone.Router.extend({
 		console.log("allPlaces");
 
 		// get the list of Places
-		Invite.appController.getPlaces(function(allPlacesList) {
+		Invite.appController.getPlacesNearMe(function(error, allPlacesList) {
 
-			// console.log(allPlacesList);
-			// create the view with this list associated
-			var allPlacesView = new Invite.Views.Places({model:allPlacesList});
+			if(error) {
+				
+				var errorView = new Invite.Views.Error({model:new Invite.Models.Error(error)});
 
-			// render
-			Invite.appController.showView(allPlacesView);
+				Invite.appController.showView(errorView);
+			}
+			else { 
+				// console.log(allPlacesList);
+				// create the view with this list associated
+				var allPlacesView = new Invite.Views.Places({model:allPlacesList});
+
+				// render
+				Invite.appController.showView(allPlacesView);
+			}
 		});
 	},
 
@@ -98,21 +132,36 @@ Invite.Router = Backbone.Router.extend({
 
 		console.log("place, id=" + placeId);
 
-		Invite.appController.getPlaceInfo(placeId, function(placeInfo) {
+		Invite.appController.getPlaceInfo(placeId, function(error, placeInfo) {
 
-			if(placeInfo !== null) {
+			if(error) {
+				
+				var errorInfo = new Invite.Models.Error(error);
+				
+				var errorView = new Invite.Views.Error({model:errorInfo});
 
-				// create the view and attach the data
-				var singlePlaceView = new Invite.Views.SinglePlace({model:new Invite.Models.Place(placeInfo)});
-
-				// switch to this new view
-				Invite.appController.showView(singlePlaceView);
+				Invite.appController.showView(errorView);
 			}
-			else {
+			else { 
 
-				console.log("No such place with id " + placeId);
+				if(placeInfo !== null) {
 
-				this.defaultRoute();
+					// create the view and attach the data
+					var singlePlaceView = new Invite.Views.SinglePlace({model:new Invite.Models.Place(placeInfo)});
+
+					// switch to this new view
+					Invite.appController.showView(singlePlaceView);
+				}
+				else {
+
+					var error_message = "No such place with id " + placeId;
+					
+					console.log(error_message);
+
+					var errorView = new Invite.Views.Error({model:new Invite.Models.Error({error_msg:error_message})});
+
+					Invite.appController.showView(errorView);
+				}
 			}
 		});
 	},
@@ -168,10 +217,13 @@ Invite.Router = Backbone.Router.extend({
 		// no such invite ID
 		else {
 
-			console.log("Could not find invite having id " + inviteId + ", returning to home screen");
+			var error_message = "Could not find invite having id " + inviteId + ", returning to home screen";
 
-			// forward to default route
-			this.defaultRoute();
+			console.log(error_message);
+
+			var errorView = new Invite.Views.Error({model:new Invite.Models.Error({error_msg:error_message})});
+
+			Invite.appController.showView(errorView);
 		}
 	},
 
