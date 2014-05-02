@@ -52,15 +52,13 @@ Invite.Router = Backbone.Router.extend({
 
 		console.log("theirProfile, id=" + fbId);
 
-		Invite.appController.getPersonInfo(fbId, function(personInfo) {
+		Invite.appController.getPersonInfo(fbId, function(theirInfo) {
 
-			// we have two models which represent a Parse.User, one for "my profile" which shows gender, DOB etc. and one for "their profile" which shows less
-			var profileInfo = new Invite.Models.Profile(personInfo);
-
-			var profileView = new Invite.Views.Person({model:profileInfo});
+			// create the view for the contact's profile
+			var theirProfileView = new Invite.Views.TheirProfile({model:new Invite.Models.Profile(theirInfo)});
 
 			// render
-			Invite.appController.showView(profileView);
+			Invite.appController.showView(theirProfileView);
 		});
 	},
 
@@ -68,14 +66,10 @@ Invite.Router = Backbone.Router.extend({
 
 		console.log("myProfile");
 
-		Invite.appController.updateProfile(function() {
+		Invite.appController.updateProfile(function(myInfo) {
 
-			// we have two models which represent a Parse.User, one for "my profile" which shows gender, DOB etc. and one for "their profile" which shows less
-			var myProfileInfo = new Invite.Models.Profile({
-				name: Parse.User.current().get("realname")
-			});
-
-			var myProfileView = new Invite.Views.Person({model:myProfileInfo});
+			// create the view for this user's profile
+			var myProfileView = new Invite.Views.MyProfile({model:new Invite.Models.Profile(myInfo)});
 
 			// render
 			Invite.appController.showView(myProfileView);
@@ -108,14 +102,8 @@ Invite.Router = Backbone.Router.extend({
 
 			if(placeInfo !== null) {
 
-				var singlePlace = new Invite.Models.Place({
-					name:placeInfo.name, 
-					venueType:placeInfo.venueType, 
-					page: placeInfo.page
-				});
-
 				// create the view and attach the data
-				var singlePlaceView = new Invite.Views.SinglePlace({model:singlePlace});
+				var singlePlaceView = new Invite.Views.SinglePlace({model:new Invite.Models.Place(placeInfo)});
 
 				// switch to this new view
 				Invite.appController.showView(singlePlaceView);

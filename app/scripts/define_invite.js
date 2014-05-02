@@ -14,7 +14,7 @@ window.Invite = {
             fjs.parentNode.insertBefore(js, fjs);
         }(document, 'script', 'facebook-jssdk'));
     },
-    loginUser: function() {
+    loginUser: function(next) {
 
         var doer = function() {
 
@@ -42,6 +42,9 @@ window.Invite = {
                         }
                         // this user object is accessible as Parse.User.current()
                         // console.log(user);
+                        if(next) {
+                            next();
+                        }
                     },
                     error: function(user, error) {
                         console.log("User cancelled the Facebook login or did not fully authorize.");

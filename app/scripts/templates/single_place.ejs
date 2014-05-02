@@ -1,8 +1,52 @@
 <h2>Place Detail</h2>
 
-<%= this.model.get('name') %>
-<%= this.model.get('venueType') %>
-<a href="<%= this.model.get('page') %>"">Facebook page</a>
+<% // fields=name,category,link,cover,description,is_permanently_closed,location,phone %>
+
+Name: <%= this.model.get('name') %>
+<br />
+
+<% if (this.model.get('phone')) {
+%>
+Phone: <%= this.model.get('phone') %>
+<br />
+<%
+}
+%>
+
+<% if (this.model.get('category')) {
+%>
+Category: <%= this.model.get('category') %>
+<br />
+<%
+}
+%>
+
+<% if (this.model.get('description')) {
+%>
+Description: <%= this.model.get('description') %>
+<br />
+<%
+}
+%>
+
+<% if (this.model.get('location')) {
+%>
+Address: <%= this.model.get('location').street %>, <%= this.model.get('location').city %>, <%= this.model.get('location').country %>.
+<br />
+<%
+}
+%>
+
+<% if (this.model.get('cover')) {
+%>
+<img src="<%= this.model.get('cover').source %>" />
+<br />
+<%
+}
+%>
+
+<br />
+<a href="<%= this.model.get('link') %>"">Facebook page</a>
 
 <br />
 <a href="#">Home</a>

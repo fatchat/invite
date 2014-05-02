@@ -5,9 +5,9 @@ Invite.Views = Invite.Views || {};
 (function () {
     'use strict';
 
-    Invite.Views.Person = Backbone.View.extend({
+    Invite.Views.TheirProfile = Backbone.View.extend({
 
-        template: JST['app/scripts/templates/person.ejs'],
+        template: JST['app/scripts/templates/their_profile.ejs'],
 
         tagName: 'div',
 
