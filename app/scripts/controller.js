@@ -25,6 +25,8 @@ function AppController() {
     // query the Graph API
     this.facebookQuery = function(queryString, callback) {
 
+        Invite.initParse();
+
         var doer = function (nattempts) {
 
             console.log(nattempts + ' ' + queryString);
@@ -35,7 +37,7 @@ function AppController() {
                 callback({error_msg:"Reached Facebook query attempt limit, giving up"});
             }
 
-            if ((!!window.FB) && (!!Parse.applicationId) && (!!Parse.User.current()) && Parse.User.current().authenticated()) {
+            if ((!!window.FB) && (!!Parse.User.current()) && Parse.User.current().authenticated()) {
 
                 window.FB.api(queryString, { 'access_token': Parse.User.current()._serverData.authData.facebook.access_token }, function(response) {
 
@@ -68,10 +70,10 @@ function AppController() {
                 });
             }
             else {
-                // wait 0.1s
+                // wait 1s. If this is too short we ending up making uneccessary requests
                 setTimeout(function() {
                     doer(1 + nattempts);
-                }, 100);
+                }, 1000);
             }
         };
 
@@ -110,34 +112,31 @@ function AppController() {
     // update Parse.User object for current user
     this.updateProfile = function(next) {
 
-        // if this is the first time the user is signing up, initialize the privacy settings
-        if (Parse.User.current().get("privacy_non_fb_see_only_name") === undefined) {
-            Parse.User.current().set("privacy_non_fb_see_only_name", false);
-        }
+        Invite.initParse();
 
-        this.facebookQuery('/me?fields=name,cover,gender', function(error, response) {
+        this.facebookQuery('/me?fields=name,cover,gender,birthday', function(error, response) {
 
             if (error) {
                 next(error);
             }
             else {
 
+                console.log(response);
+                // overwrite existing values, if any, and send to Parse
+                Parse.User.current().set("gender", response.gender);        
+                Parse.User.current().set("birthday", response.birthday);
+                Parse.User.current().save();
+
                 // information to populate the model. extract fields from response keeping the same names; adding more is allowed
                 var info = {
                     id : response.id,
-                    name : response.name,
-                    gender : response.gender,
+                    name: response.name,
+                    gender : response.gender,   // remove
+                    birthday: response.birthday,    // remove
                     privacy_non_fb_see_only_name : Parse.User.current().get("privacy_non_fb_see_only_name"),
-                    cover : response.cover
+                    cover : response.cover,
+                    profilePhotoURL: "//graph.facebook.com/" + response.id + "/picture"
                 };
-
-                // overwrite existing values, if any, and send to Parse
-                _.each(info, function(val, key) {
-                    if(info.hasOwnProperty(key)) {
-                        Parse.User.current().set(key, val);
-                    }
-                });
-                Parse.User.current().save();
 
                 // 
                 next(null, info);
@@ -160,7 +159,8 @@ function AppController() {
                 var info = {
                     id : fbId,
                     name : response.name,
-                    cover : response.cover
+                    cover : response.cover,
+                    profilePhotoURL: "//graph.facebook.com/" + fbId + "/picture"
                 };
 
                 // find their Invite user obj, if it exists check the privacy_non_fb_see_only_name flag

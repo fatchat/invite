@@ -3,6 +3,10 @@
 Name : <%= this.model.get("name") %>
 <br />
 
+<% if(this.model.get("profilePhotoURL")) { %>
+<img src="<%= this.model.get("profilePhotoURL") %>" />
+<% } %>
+
 <% if(this.model.get("cover")) { %>
 <img src="<%= this.model.get("cover").source %>" />
 <% } %>
