@@ -13,6 +13,8 @@ Invite.Models = Invite.Models || {};
         },
 
         defaults: {
+
+            what: 'A New Plan!'
         },
 
         validate: function(attrs, options) {
@@ -20,6 +22,19 @@ Invite.Models = Invite.Models || {};
 
         parse: function(response, options)  {
             return response;
+        },
+
+        schema: {
+
+            what : 'Text',
+
+            when : 'DateTime',
+
+            end : 'DateTime',
+
+            where : { type: 'NestedModel', model: Invite.Models.Place },
+
+            who : { type: 'NestedModel', model: Invite.Models.Person }
         }
     });
 

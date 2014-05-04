@@ -27,6 +27,11 @@ Invite.Models = Invite.Models || {};
 
         parse: function(response, options)  {
             return response;
+        },
+
+        schema : {
+
+            fbId : Number
         }
     });
 

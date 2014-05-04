@@ -24,6 +24,7 @@ Invite.Router = Backbone.Router.extend({
 		"*actions"		: "defaultRoute"
 	},
 
+	// ==================================== PEOPLE =============================================
 	// verify that Parse.User.current() !== null
 	allPeople : function() {
 
@@ -102,6 +103,7 @@ Invite.Router = Backbone.Router.extend({
 		});
 	},
 
+	// ==================================== PLACES =============================================
 	// verify that Parse.User.current() !== null
 	allPlaces : function() {
 
@@ -166,13 +168,30 @@ Invite.Router = Backbone.Router.extend({
 		});
 	},
 
+	// ==================================== INVTES =============================================
 	// verify that Parse.User.current() !== null
 	createInvite : function() {
 
-		console.log("createInvite");
+		// console.log("createInvite");
 
-		// create the view and the invite data
-		var createInviteView = new Invite.Views.CreateInvite({model:{}});
+		// the invitation object
+		var invite = new Invite.Models.Invite();
+
+		// create the form
+		var createInviteView = new Backbone.Form({model: invite });
+
+		createInviteView.on('submit', function(event) {
+
+			event.preventDefault();
+
+			console.log("submit");
+
+			console.log(invite);
+			form.commit();
+			console.log(invite);
+			// invite.save();
+		});
+
 
 		// switch to this new view
 		Invite.appController.showView(createInviteView);
